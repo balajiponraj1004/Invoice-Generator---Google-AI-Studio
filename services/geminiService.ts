@@ -1,5 +1,5 @@
-import { GoogleGenAI, Type, SchemaType } from "@google/genai";
-import { InvoiceData, LineItem } from "../types";
+import { GoogleGenAI, Type } from "@google/genai";
+import { InvoiceData, LineItem, Product } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -16,11 +16,11 @@ const orderSchema = {
       items: {
         type: Type.OBJECT,
         properties: {
-          description: { type: Type.STRING, description: "Short description of the cake or item" },
+          description: { type: Type.STRING, description: "Description or matching product name" },
           flavor: { type: Type.STRING, description: "Flavor of the cake" },
           weight: { type: Type.STRING, description: "Weight of the cake (e.g. 1kg, 2lbs)" },
           quantity: { type: Type.NUMBER, description: "Quantity of items" },
-          price: { type: Type.NUMBER, description: "Estimated price per unit based on standard cake pricing logic (assume $20/kg base if unknown)" },
+          price: { type: Type.NUMBER, description: "Price of the item. Use menu price if matched, otherwise estimate." },
         },
         required: ["description", "quantity", "price"],
       },
@@ -29,17 +29,23 @@ const orderSchema = {
   required: ["items"],
 };
 
-export const parseOrderWithGemini = async (orderText: string): Promise<Partial<InvoiceData>> => {
+export const parseOrderWithGemini = async (orderText: string, menuItems: Product[] = []): Promise<Partial<InvoiceData>> => {
   try {
+    // Construct a menu string context
+    const menuContext = menuItems.length > 0 
+      ? `Here is the bakery's menu with prices. Try to match items from the text to these exact names and prices where possible: \n${menuItems.map(p => `- ${p.name}: $${p.price} (${p.flavor || 'Standard'}, ${p.weight || 'Standard'})`).join('\n')}`
+      : "No specific menu provided, estimate reasonable bakery prices.";
+
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: `Extract cake order details from this text: "${orderText}". 
-      If prices are not mentioned, estimate reasonable prices for a bakery.
+      ${menuContext}
+      If prices are not mentioned and no menu match found, estimate reasonable prices.
       Format the date as YYYY-MM-DD.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: orderSchema,
-        systemInstruction: "You are an assistant for a bakery called 'Cake Dudes'. You help parse unstructured order messages into structured invoice data.",
+        systemInstruction: "You are an assistant for a bakery called 'Cake Dudes'. You help parse unstructured order messages into structured invoice data. Always prefer menu items if they loosely match.",
       },
     });
 

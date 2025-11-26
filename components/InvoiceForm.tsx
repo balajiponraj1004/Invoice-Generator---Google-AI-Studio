@@ -1,15 +1,16 @@
-import React, { useCallback } from 'react';
-import { InvoiceData, LineItem } from '../types';
-import { Plus, Trash2, Wand2, Upload, Building, Palette, Image as ImageIcon } from 'lucide-react';
+import React from 'react';
+import { InvoiceData, LineItem, Product } from '../types';
+import { Plus, Trash2, Wand2, ShoppingBag } from 'lucide-react';
 
 interface InvoiceFormProps {
   data: InvoiceData;
+  menuItems: Product[];
   onChange: (data: InvoiceData) => void;
   onOpenAI: () => void;
   isProcessing: boolean;
 }
 
-export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange, onOpenAI, isProcessing }) => {
+export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, menuItems, onChange, onOpenAI, isProcessing }) => {
 
   const updateField = (field: keyof InvoiceData, value: any) => {
     onChange({ ...data, [field]: value });
@@ -34,27 +35,36 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange, onOpen
     updateField('items', [...data.items, newItem]);
   };
 
+  const addFromMenu = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const productId = e.target.value;
+    if (!productId) return;
+
+    const product = menuItems.find(p => p.id === productId);
+    if (product) {
+      const newItem: LineItem = {
+        id: crypto.randomUUID(),
+        description: product.name,
+        quantity: 1,
+        price: product.price,
+        flavor: product.flavor || '',
+        weight: product.weight || ''
+      };
+      updateField('items', [...data.items, newItem]);
+    }
+    // Reset select
+    e.target.value = "";
+  };
+
   const removeItem = (id: string) => {
     updateField('items', data.items.filter(item => item.id !== id));
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        updateField('logo', reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-8">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-8 animate-in fade-in duration-500">
       
       {/* Header Actions */}
       <div className="flex justify-between items-center pb-4 border-b border-gray-100">
-        <h2 className="text-xl font-bold text-gray-800">Edit Invoice</h2>
+        <h2 className="text-xl font-bold text-gray-800">Invoice Details</h2>
         <button
           onClick={onOpenAI}
           disabled={isProcessing}
@@ -65,89 +75,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange, onOpen
         </button>
       </div>
 
-      {/* Branding & Company Info */}
-      <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-4">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-          <Building size={16} /> Company & Branding
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-           {/* Company Details */}
-           <div className="space-y-3">
-              <input
-                type="text"
-                placeholder="Company Name"
-                value={data.companyName}
-                onChange={(e) => updateField('companyName', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none text-sm font-medium"
-              />
-              <input
-                type="email"
-                placeholder="Company Email"
-                value={data.companyEmail}
-                onChange={(e) => updateField('companyEmail', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none text-sm"
-              />
-              <textarea
-                placeholder="Company Address"
-                value={data.companyAddress}
-                onChange={(e) => updateField('companyAddress', e.target.value)}
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none text-sm resize-none"
-              />
-           </div>
-
-           {/* Appearance */}
-           <div className="space-y-3">
-              <div className="flex items-start gap-4">
-                 <div className="flex-1">
-                    <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
-                      <Palette size={12} /> Theme Color
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={data.themeColor}
-                        onChange={(e) => updateField('themeColor', e.target.value)}
-                        className="h-9 w-16 p-1 rounded border border-gray-300 cursor-pointer"
-                      />
-                      <span className="text-xs font-mono text-gray-500">{data.themeColor}</span>
-                    </div>
-                 </div>
-                 <div className="flex-1">
-                    <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
-                      <ImageIcon size={12} /> Logo
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleLogoUpload}
-                        className="hidden"
-                        id="logo-upload"
-                      />
-                      <label 
-                        htmlFor="logo-upload"
-                        className="flex items-center justify-center gap-2 w-full h-9 px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors"
-                      >
-                        <Upload size={14} /> {data.logo ? 'Change' : 'Upload'}
-                      </label>
-                    </div>
-                    {data.logo && (
-                      <button 
-                        onClick={() => updateField('logo', '')}
-                        className="text-[10px] text-red-500 mt-1 hover:underline w-full text-right"
-                      >
-                        Remove Logo
-                      </button>
-                    )}
-                 </div>
-              </div>
-           </div>
-        </div>
-      </div>
-
-      {/* Invoice Details */}
+      {/* Invoice Meta */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Number</label>
@@ -199,20 +127,42 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange, onOpen
 
       {/* Line Items */}
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-wrap justify-between items-center gap-2">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Order Items</h3>
-          <button
-            onClick={addItem}
-            className="text-sm font-medium hover:opacity-80 flex items-center gap-1"
-            style={{ color: data.themeColor }}
-          >
-            <Plus size={16} /> Add Item
-          </button>
+          
+          <div className="flex items-center gap-2">
+             {menuItems.length > 0 && (
+                <div className="relative">
+                   <select 
+                     onChange={addFromMenu} 
+                     className="appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg px-8 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer hover:bg-gray-100"
+                     defaultValue=""
+                   >
+                      <option value="" disabled>Select from Menu...</option>
+                      {menuItems.map(p => (
+                         <option key={p.id} value={p.id}>{p.name} (${p.price})</option>
+                      ))}
+                   </select>
+                   <ShoppingBag size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                </div>
+             )}
+             <button
+              onClick={addItem}
+              className="text-sm font-medium hover:opacity-80 flex items-center gap-1 text-brand-600 px-3 py-1.5 rounded-lg hover:bg-brand-50 transition-colors"
+            >
+              <Plus size={16} /> Add Custom
+            </button>
+          </div>
         </div>
         
         <div className="space-y-3">
+          {data.items.length === 0 && (
+             <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-200 text-gray-400 text-sm">
+                No items added yet.
+             </div>
+          )}
           {data.items.map((item) => (
-            <div key={item.id} className="grid grid-cols-12 gap-2 items-start bg-gray-50 p-3 rounded-lg border border-gray-100 relative group">
+            <div key={item.id} className="grid grid-cols-12 gap-2 items-start bg-gray-50 p-3 rounded-lg border border-gray-100 relative group transition-all hover:shadow-sm hover:border-gray-200">
               <div className="col-span-12 md:col-span-4">
                 <input
                   type="text"
@@ -264,7 +214,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange, onOpen
               <div className="col-span-1 flex justify-center pt-2">
                 <button
                   onClick={() => removeItem(item.id)}
-                  className="text-gray-400 hover:text-red-500 transition-colors"
+                  className="text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                 >
                   <Trash2 size={16} />
                 </button>
