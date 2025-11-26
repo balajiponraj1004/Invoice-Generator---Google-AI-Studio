@@ -1,0 +1,5 @@
+{
+  "name": "Cake Dudes Invoice Gen",
+  "description": "A professional invoice generator for Cake Dudes with AI-powered order parsing and PDF export capabilities.",
+  "requestFramePermissions": []
+}
