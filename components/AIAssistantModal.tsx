@@ -35,7 +35,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({ isOpen, onCl
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="e.g. Hi! I need a 2kg Chocolate Truffle cake for Sarah's birthday on Oct 25th. Please deliver to 123 Maple St. Contact: 555-0123."
-            className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none mb-4 text-sm"
+            className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none mb-4 text-sm bg-white text-gray-900"
           />
 
           {!process.env.API_KEY && (

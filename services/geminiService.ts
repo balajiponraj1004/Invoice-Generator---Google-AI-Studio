@@ -3,7 +3,7 @@ import { InvoiceData, LineItem, Product } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-// We define a partial schema to extract order details
+// Schema for parsing orders
 const orderSchema = {
   type: Type.OBJECT,
   properties: {
@@ -27,6 +27,21 @@ const orderSchema = {
     },
   },
   required: ["items"],
+};
+
+// Schema for parsing menu items
+const menuSchema = {
+  type: Type.ARRAY,
+  items: {
+    type: Type.OBJECT,
+    properties: {
+      name: { type: Type.STRING, description: "Name of the product" },
+      price: { type: Type.NUMBER, description: "Price of the product" },
+      flavor: { type: Type.STRING, description: "Flavor if specified (e.g. Chocolate, Vanilla)" },
+      weight: { type: Type.STRING, description: "Weight or size if specified (e.g. 1kg, Slice)" }
+    },
+    required: ["name", "price"]
+  }
 };
 
 export const parseOrderWithGemini = async (orderText: string, menuItems: Product[] = []): Promise<Partial<InvoiceData>> => {
@@ -74,6 +89,62 @@ export const parseOrderWithGemini = async (orderText: string, menuItems: Product
 
   } catch (error) {
     console.error("Error parsing order with Gemini:", error);
+    throw error;
+  }
+};
+
+export const parseMenuSource = async (input: string | { data: string; mimeType: string }): Promise<Product[]> => {
+  try {
+    const isImage = typeof input !== 'string';
+    
+    let contentPart: any;
+    if (isImage) {
+        contentPart = {
+            inlineData: {
+                data: (input as any).data,
+                mimeType: (input as any).mimeType
+            }
+        };
+    } else {
+        contentPart = { text: input as string };
+    }
+
+    const prompt = `Extract menu items from this ${isImage ? 'image' : 'text'}. 
+    Return a list of products with names, prices, and optional attributes like flavor or weight. 
+    If a currency symbol is present, ignore it and just get the number.
+    Ignore header text or irrelevant information, just focus on the items for sale.`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: {
+        parts: [
+            contentPart,
+            { text: prompt }
+        ]
+      },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: menuSchema,
+        systemInstruction: "You are a menu extraction assistant. Extract structured product data from menus.",
+      }
+    });
+
+    const text = response.text;
+    if (!text) throw new Error("No response from AI");
+
+    const rawProducts = JSON.parse(text);
+
+    // Add UUIDs to products
+    return rawProducts.map((p: any) => ({
+      id: crypto.randomUUID(),
+      name: p.name,
+      price: p.price,
+      flavor: p.flavor || '',
+      weight: p.weight || ''
+    }));
+
+  } catch (error) {
+    console.error("Error parsing menu source:", error);
     throw error;
   }
 };

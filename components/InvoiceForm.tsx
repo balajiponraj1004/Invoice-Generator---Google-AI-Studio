@@ -1,6 +1,6 @@
 import React from 'react';
 import { InvoiceData, LineItem, Product } from '../types';
-import { Plus, Trash2, Wand2, ShoppingBag } from 'lucide-react';
+import { Plus, Trash2, Wand2, ShoppingBag, Calendar } from 'lucide-react';
 
 interface InvoiceFormProps {
   data: InvoiceData;
@@ -59,6 +59,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, menuItems, onCha
     updateField('items', data.items.filter(item => item.id !== id));
   };
 
+  // Dynamic style for inputs to match theme
+  const inputThemeStyle = {
+    '--tw-ring-color': data.themeColor,
+    borderColor: 'e5e7eb', // gray-200 default
+    accentColor: data.themeColor
+  } as React.CSSProperties;
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-8 animate-in fade-in duration-500">
       
@@ -68,7 +75,8 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, menuItems, onCha
         <button
           onClick={onOpenAI}
           disabled={isProcessing}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-md disabled:opacity-50 hover:brightness-110"
+          style={{ background: `linear-gradient(to right, ${data.themeColor}, ${data.themeColor}dd)` }}
         >
           <Wand2 size={18} />
           {isProcessing ? 'Thinking...' : 'AI Autofill'}
@@ -76,24 +84,44 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, menuItems, onCha
       </div>
 
       {/* Invoice Meta */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Number</label>
           <input
             type="text"
             value={data.invoiceNumber}
             onChange={(e) => updateField('invoiceNumber', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 outline-none transition-all bg-white text-gray-900"
+            style={inputThemeStyle}
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-          <input
-            type="date"
-            value={data.date}
-            onChange={(e) => updateField('date', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all"
-          />
+          <div className="relative">
+            <input
+              type="date"
+              value={data.date}
+              onChange={(e) => updateField('date', e.target.value)}
+              onClick={(e) => e.currentTarget.showPicker()}
+              onFocus={(e) => e.currentTarget.showPicker()}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 outline-none transition-all bg-white text-gray-900 cursor-pointer"
+              style={inputThemeStyle}
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+          <div className="relative">
+            <input
+              type="date"
+              value={data.dueDate}
+              onChange={(e) => updateField('dueDate', e.target.value)}
+              onClick={(e) => e.currentTarget.showPicker()}
+              onFocus={(e) => e.currentTarget.showPicker()}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 outline-none transition-all bg-white text-gray-900 cursor-pointer"
+              style={inputThemeStyle}
+            />
+          </div>
         </div>
       </div>
 
@@ -106,21 +134,24 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, menuItems, onCha
             placeholder="Customer Name"
             value={data.customerName}
             onChange={(e) => updateField('customerName', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 outline-none bg-white text-gray-900"
+            style={inputThemeStyle}
           />
           <input
             type="tel"
             placeholder="Phone Number"
             value={data.customerPhone}
             onChange={(e) => updateField('customerPhone', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 outline-none bg-white text-gray-900"
+            style={inputThemeStyle}
           />
           <input
             type="text"
             placeholder="Address"
             value={data.customerAddress}
             onChange={(e) => updateField('customerAddress', e.target.value)}
-            className="w-full md:col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
+            className="w-full md:col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 outline-none bg-white text-gray-900"
+            style={inputThemeStyle}
           />
         </div>
       </div>
@@ -135,7 +166,8 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, menuItems, onCha
                 <div className="relative">
                    <select 
                      onChange={addFromMenu} 
-                     className="appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg px-8 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer hover:bg-gray-100"
+                     className="appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg px-8 py-1.5 focus:outline-none focus:ring-2 cursor-pointer hover:bg-gray-100"
+                     style={inputThemeStyle}
                      defaultValue=""
                    >
                       <option value="" disabled>Select from Menu...</option>
@@ -148,7 +180,8 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, menuItems, onCha
              )}
              <button
               onClick={addItem}
-              className="text-sm font-medium hover:opacity-80 flex items-center gap-1 text-brand-600 px-3 py-1.5 rounded-lg hover:bg-brand-50 transition-colors"
+              className="text-sm font-medium hover:opacity-80 flex items-center gap-1 px-3 py-1.5 rounded-lg transition-colors bg-gray-100"
+              style={{ color: data.themeColor }}
             >
               <Plus size={16} /> Add Custom
             </button>
@@ -169,7 +202,8 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, menuItems, onCha
                   placeholder="Description (e.g. Chocolate Cake)"
                   value={item.description}
                   onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
-                  className="w-full bg-transparent border-b border-gray-300 focus:border-brand-500 outline-none px-1 py-1"
+                  className="w-full bg-white border-b border-gray-300 outline-none px-2 py-1 text-gray-900 rounded focus:border-transparent focus:ring-2"
+                  style={{ '--tw-ring-color': data.themeColor } as React.CSSProperties}
                 />
                 <div className="flex gap-2 mt-2">
                    <input
@@ -177,14 +211,16 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, menuItems, onCha
                     placeholder="Flavor"
                     value={item.flavor}
                     onChange={(e) => handleItemChange(item.id, 'flavor', e.target.value)}
-                    className="w-1/2 text-xs bg-white border border-gray-200 rounded px-2 py-1"
+                    className="w-1/2 text-xs bg-white border border-gray-200 rounded px-2 py-1 text-gray-900 focus:outline-none focus:ring-1"
+                    style={{ '--tw-ring-color': data.themeColor } as React.CSSProperties}
                   />
                    <input
                     type="text"
                     placeholder="Weight"
                     value={item.weight}
                     onChange={(e) => handleItemChange(item.id, 'weight', e.target.value)}
-                    className="w-1/2 text-xs bg-white border border-gray-200 rounded px-2 py-1"
+                    className="w-1/2 text-xs bg-white border border-gray-200 rounded px-2 py-1 text-gray-900 focus:outline-none focus:ring-1"
+                    style={{ '--tw-ring-color': data.themeColor } as React.CSSProperties}
                   />
                 </div>
               </div>
@@ -195,7 +231,8 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, menuItems, onCha
                   placeholder="Price"
                   value={item.price}
                   onChange={(e) => handleItemChange(item.id, 'price', parseFloat(e.target.value) || 0)}
-                  className="w-full bg-transparent border-b border-gray-300 focus:border-brand-500 outline-none px-1 py-1 text-right"
+                  className="w-full bg-white border-b border-gray-300 outline-none px-2 py-1 text-right text-gray-900 rounded focus:border-transparent focus:ring-2"
+                  style={{ '--tw-ring-color': data.themeColor } as React.CSSProperties}
                 />
               </div>
               <div className="col-span-3 md:col-span-2">
@@ -205,7 +242,8 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, menuItems, onCha
                   placeholder="Qty"
                   value={item.quantity}
                   onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 1)}
-                  className="w-full bg-transparent border-b border-gray-300 focus:border-brand-500 outline-none px-1 py-1 text-center"
+                  className="w-full bg-white border-b border-gray-300 outline-none px-2 py-1 text-center text-gray-900 rounded focus:border-transparent focus:ring-2"
+                  style={{ '--tw-ring-color': data.themeColor } as React.CSSProperties}
                 />
               </div>
               <div className="col-span-4 md:col-span-2 text-right font-medium text-gray-700 flex items-center justify-end h-full pt-1">
@@ -232,7 +270,8 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, menuItems, onCha
             value={data.notes}
             onChange={(e) => updateField('notes', e.target.value)}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 outline-none text-sm bg-white text-gray-900"
+            style={inputThemeStyle}
           />
         </div>
         <div className="space-y-3">
@@ -242,7 +281,8 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, menuItems, onCha
               type="number"
               value={data.taxRate}
               onChange={(e) => updateField('taxRate', parseFloat(e.target.value) || 0)}
-              className="w-20 px-2 py-1 border border-gray-300 rounded text-right focus:ring-2 focus:ring-brand-500 outline-none"
+              className="w-20 px-2 py-1 border border-gray-300 rounded text-right focus:ring-2 outline-none bg-white text-gray-900"
+              style={inputThemeStyle}
             />
           </div>
           <div className="flex justify-between items-center">
@@ -251,7 +291,8 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, menuItems, onCha
               type="number"
               value={data.discount}
               onChange={(e) => updateField('discount', parseFloat(e.target.value) || 0)}
-              className="w-20 px-2 py-1 border border-gray-300 rounded text-right focus:ring-2 focus:ring-brand-500 outline-none"
+              className="w-20 px-2 py-1 border border-gray-300 rounded text-right focus:ring-2 outline-none bg-white text-gray-900"
+              style={inputThemeStyle}
             />
           </div>
         </div>

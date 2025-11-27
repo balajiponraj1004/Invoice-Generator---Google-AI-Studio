@@ -1,3 +1,4 @@
+
 export interface LineItem {
   id: string;
   description: string;
@@ -21,7 +22,11 @@ export interface AppSettings {
   companyEmail: string;
   logo: string;
   themeColor: string;
+  defaultTaxRate: number;
   products: Product[];
+  googleDriveClientId?: string;
+  googleSheetsId?: string;
+  autoExportToSheet?: boolean;
 }
 
 export interface InvoiceData {
@@ -54,12 +59,16 @@ export const DEFAULT_SETTINGS: AppSettings = {
   companyEmail: 'contact@cakedudes.com',
   logo: '',
   themeColor: '#ec4899',
+  defaultTaxRate: 0,
   products: [
     { id: '1', name: 'Vanilla Bean Cake', price: 45.00, flavor: 'Vanilla', weight: '1kg' },
     { id: '2', name: 'Chocolate Truffle', price: 55.00, flavor: 'Chocolate', weight: '1kg' },
     { id: '3', name: 'Red Velvet', price: 50.00, flavor: 'Red Velvet', weight: '1kg' },
     { id: '4', name: 'Custom Cupcakes (Dozen)', price: 30.00, flavor: 'Assorted', weight: '12 pack' }
-  ]
+  ],
+  googleDriveClientId: '',
+  googleSheetsId: '',
+  autoExportToSheet: false
 };
 
 export const DEFAULT_INVOICE: InvoiceData = {
